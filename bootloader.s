@@ -24,15 +24,32 @@ main:
 	movw %bp, %sp
 
 	movb %dl, BOOT_DRIVE	# save the drive number where bootloader was loaded from
+
+	movw $MSG_INIT, %si
+	call print_string
 	
-	movw $MSG_BOOT_INIT, %si
+	movw $MSG_BOOT_INIT, %si	# display initial message
 	call print_string
 
-	movw $MSG_BOOT_ORIGIN, %si
+	movw $MSG_BOOT_ORIGIN, %si	# display where bootloader was booted from
 	call print_string
 	call bootnum_toascii
 	movw $MSG_BOOT_DRIVE, %si
 	call print_string
+
+	movw $MSG_VIDEO_INITIAL, %si	# display the initial video mode
+	call print_string
+	call get_vidmode	
+	call vidmode_toascii
+	movw $MSG_VIDEO_MODE, %si
+	call print_string
+
+	movw $MSG_BOOT_RELOC, %si	# bootstrap system
+	call print_string
+
+	movw $MSG_PMODE_ENABLED, %si
+	call print_string
+
 complete:
 	jmp complete
 
@@ -49,38 +66,76 @@ print_string:			# this function assumes that the string to be printed
 print_string_end:
 	ret
 
+	
 bootnum_toascii:		# this function converts an 8-bit hexadecimal value
 	movb BOOT_DRIVE, %al	# into an ascii string
 	shr $4, %al
 	cmp $10, %al
-	jg add_55_1
+	jg add_55_1a
 	addb $48, %al
-	jmp next1
-add_55_1:
+	jmp next1a
+add_55_1a:
 	add $55, %al
-next1:
+next1a:
 	movb %al, (MSG_BOOT_DRIVE + 2)
 	movb BOOT_DRIVE, %al
 	andb $0x0F, %al
 	cmp $10, %al
-	jg add_55_2
+	jg add_55_2a
 	addb $48, %al
-	jmp next2
-add_55_2:
+	jmp next2a
+add_55_2a:
 	add $55, %al
-next2:
+next2a:
 	movb %al, (MSG_BOOT_DRIVE + 3)
 bootnum_toascii_end:
 	ret
 
+	
+get_vidmode:
+	movb $0x0F, %ah
+	int $0x10
+get_vidmode_end:
+	ret
+
+	
+vidmode_toascii:
+	movb %al, %ah
+	shr $4, %al
+	cmp $10, %al
+	jg add_55_1b
+	addb $48, %al
+	jmp next1b
+add_55_1b:
+	add $55, %al
+next1b:
+	movb %al, (MSG_VIDEO_MODE + 2)
+	movb %ah, %al
+	andb $0x0F, %al
+	cmp $10, %al
+	jg add_55_2b
+	addb $48, %al
+	jmp next_2b
+add_55_2b:
+	add $55, %al
+next_2b:
+	movb %al, (MSG_VIDEO_MODE + 3)
+vidmode_toascii_end:
+	ret
+
 #****************************************************************************************
 # variables:
-	
+
+MSG_INIT:
+	.ascii "copyright(c) 2014, Jarielle Catbagan"
+	.byte 13, 10, 0
 MSG_BOOT_INIT:
+	.byte 13, 10
 	.ascii "system on - bootloader initiated"
 	.byte 13, 10, 0
 MSG_BOOT_ORIGIN:
 	.ascii "loaded from drive "
+	.byte 0
 BOOT_DRIVE:
 	.byte 0x00
 MSG_BOOT_DRIVE:
@@ -89,8 +144,19 @@ MSG_BOOT_DRIVE:
 MSG_BOOT_RELOC:
 	.ascii "bootstrapping remaining system"
 	.byte 13, 10, 0
+MSG_VIDEO_INITIAL:
+	.ascii "initial video mode: "
+	.byte 0
+MSG_VIDEO_MODE:
+	.ascii "0x00"
+	.byte 13, 10, 0
+MSG_PMODE_ENABLED:
+	.ascii "protected mode is now enabled"
+	.byte 13, 10, 0
 
-	.rept 308
+
+	
+	.rept 132
 	.byte 0
 	.endr
 
