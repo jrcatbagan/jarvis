@@ -1,13 +1,16 @@
-/*
- * File: bootloader.s
- *
- * Created: 10, September 2014
- *
- * Copyright (C) 2014, Jarielle Catbagan
- *
- * BSD-style license
- * Please refer to COPYING.txt for license details
- */
+#****************************************************************************************
+#
+# File: bootloader.s
+#
+# Created: 10, September 2014
+#
+# Copyright (C) 2014, Jarielle Catbagan
+#
+# BSD-style license
+# Please refer to COPYING.txt for license details
+#
+#****************************************************************************************
+	
 	.code16
 	.org 0x0000
 main:
@@ -33,8 +36,8 @@ main:
 complete:
 	jmp complete
 
-/**************************************************************************************/
-/* functions */
+#****************************************************************************************
+# functions:
 	
 print_string:			# this function assumes that the string to be printed
 	lodsb			# is passed as an argument where the 'si' register
@@ -70,8 +73,8 @@ next2:
 bootnum_toascii_end:
 	ret
 
-/***************************************************************************************/
-/* variables */
+#****************************************************************************************
+# variables:
 	
 MSG_BOOT_INIT:
 	.ascii "system on - bootloader initiated"
@@ -93,7 +96,7 @@ MSG_BOOT_RELOC:
 
 	.word 0xAA55
 	
-	
+	.end
 
 
 
