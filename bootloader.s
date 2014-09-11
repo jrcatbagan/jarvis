@@ -50,6 +50,20 @@ main:
 	movw $MSG_PMODE_ENABLED, %si
 	call print_string
 
+	movb $0x02, %ah
+	movb $0x01, %al
+	movb $0x00, %ch
+	movb $0x03, %cl
+	movb $0x00, %dh
+	movb BOOT_DRIVE, %dl
+	movw $0x7F00, %bx
+	movw %bx, %es
+	movw $0x0000, %bx
+	int $0x13
+
+	movw $MSG_TEST, %si
+	call print_string
+	
 complete:
 	jmp complete
 
@@ -154,15 +168,15 @@ MSG_PMODE_ENABLED:
 	.ascii "protected mode is now enabled"
 	.byte 13, 10, 0
 
+#	.org 0x01FE
 
-	
-	.rept 132
-	.byte 0
-	.endr
+MSG_TEST:
+	.ascii "hello world! :)"
 
+	.org 0x01FE
 	.word 0xAA55
-	
-	.end
+
+
 
 #****************************************************************************************
 

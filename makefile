@@ -1,8 +1,8 @@
 # Created: 10, September 2014
 
-build: bootloader.bin
-	dd if=bootloader.bin of=bootloader.img bs=512
-	mv bootloader.img bin/floppy
+jarvis.iso: bootloader.bin
+	genisoimage -R -b $< -no-emul-boot -boot-load-size 4 -o $@ .
+	mv jarvis.iso bin
 	mv *.bin *.list *.o out
 
 bootloader.bin: bootloader.o
@@ -13,4 +13,4 @@ bootloader.o: bootloader.s
 
 .PHONY: clean
 clean:
-	rm -f out/* bin/floppy/*.img
+	rm -f out/* bin/*.iso
