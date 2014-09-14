@@ -1,9 +1,14 @@
 # Created: 10, September 2014
 
 jarvis.iso: bootloader.bin
-	genisoimage -R -b $< -no-emul-boot -boot-load-size 4 -o $@ .
+	mv $< iso-dep/bin
+	genisoimage -R -b bin/bootloader.bin -no-emul-boot -boot-load-size 4 -o $@ \
+		iso-dep
 	mv jarvis.iso bin
-	mv *.bin *.list *.o out
+	mv *.list *.o out
+	xxd bin/jarvis.iso > jarvis.hexdump
+	xxd iso-dep/bin/bootloader.bin > bootloader.hexdump
+	mv *.hexdump out
 
 bootloader.bin: bootloader.o
 	objcopy -O binary $< $@
@@ -13,4 +18,4 @@ bootloader.o: bootloader.s
 
 .PHONY: clean
 clean:
-	rm -f out/* bin/*.iso
+	rm -f out/* bin/*.iso iso-dep/bin/* *.hexdump
