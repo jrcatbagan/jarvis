@@ -1,5 +1,4 @@
 #****************************************************************************************
-#----------------------------------------------------------------------------------------
 #
 # File: bootloader.s
 #
@@ -11,14 +10,12 @@
 # Please refer to COPYING.txt for license details
 #
 #****************************************************************************************
-#----------------------------------------------------------------------------------------
 	
 	.code16
 	.org 0x0000
 
 #========================================================================================
-# type:	function
-# name: main
+# entry: main
 # parameter(s):
 #		- none
 # return:
@@ -29,9 +26,9 @@ main:
 	movw %ax, %ds		# is where the BIOS places the boot code first 
 	movw %ax, %es
 
-	movw $0x0000, %ax	# initialize the stack to 0x0000:0x7B00
+	movw $0x07C0, %ax	# initialize the stack to 0x0000:0x7B00
 	movw %ax, %ss
-	movw $0x7B00, %bp
+	movw $0x0000, %bp
 	movw %bp, %sp
 
 	movb %dl, BOOT_DRIVE	# save the drive number where bootloader was loaded from
@@ -44,21 +41,25 @@ main:
 
 	movw $MSG_BOOT_ORIGIN, %si	# display where bootloader was booted from
 	call print_string
+	push %bx
 	movw $BOOT_DRIVE, %bx
 	movw $MSG_BOOT_DRIVE, %dx
 	add $2, %dx
 	call _8bithex_toascii
+	pop %bx
 	movw $MSG_BOOT_DRIVE, %si
 	call print_string
 
 	movw $MSG_VIDEO_INITIAL, %si	# display the initial video mode
 	call print_string
-	call get_vidmode	
-	movb %al, VIDEO_MODE
+	push %bx
+	movw $VIDEO_MODE, %bx
+	call get_vidmode
 	movw $VIDEO_MODE, %bx
 	movw $MSG_VIDEO_MODE, %dx
 	add $2, %dx
 	call _8bithex_toascii
+	pop %bx
 	movw $MSG_VIDEO_MODE, %si
 	call print_string
 
@@ -67,7 +68,7 @@ main:
 
 	movw $MSG_PMODE_ENABLED, %si
 	call print_string
-
+/*
 	movb $0x02, %ah
 	movb $0x01, %al
 	movb $0x00, %ch
@@ -77,7 +78,7 @@ main:
 	movw $0x7F00, %bx
 	movw %bx, %es
 	movw $0x0000, %bx
-	int $0x13
+	int $0x13*/
 	
 	
 complete:
@@ -87,27 +88,27 @@ complete:
 
 	
 #========================================================================================
-# type:	function
-# name: print_string
+# entry: print_string
 # parameter(s):
 #		- SI set to the address of message to print
 # return:
 #		- none
 #----------------------------------------------------------------------------------------
-print_string:	
+print_string:
+	push %ax
 0:	lodsb		
 	andb $0xFF, %al	
 	jz 1f
 	movb $0x0E, %ah
 	int $0x10
 	jmp 0b
-1:	ret
+1:	pop %ax
+	ret
 #========================================================================================
 
 
 #========================================================================================
-# type:	function
-# name: _8bit_toascii
+# entry: _8bit_toascii
 # parameter(s):
 #		- BX contains the address of the 8-bit value to convert
 #		- DX contains the address where the ascii 2-digit hex will be stored
@@ -142,13 +143,22 @@ _8bithex_toascii:
 	ret
 #========================================================================================
 	
-	
+
+#========================================================================================
+# entry: get_vidmode
+# parameters:
+#		- none
+# return:
+#		- BX is set to contain the address to where the video mode value will
+#		  be stored	
+#----------------------------------------------------------------------------------------
 get_vidmode:
 	movb $0x0F, %ah
 	int $0x10
+	movb %al, (%bx)
 get_vidmode_end:
 	ret
-
+#----------------------------------------------------------------------------------------
 	
 
 #========================================================================================
@@ -171,7 +181,7 @@ MSG_BOOT_DRIVE:
 	.ascii "0x00"
 	.byte 13, 10, 0
 MSG_BOOT_RELOC:
-	.ascii "bootstrapping remaining system"
+	.ascii "bootstrapping remaining system" 
 	.byte 13, 10, 0
 MSG_VIDEO_INITIAL:
 	.ascii "initial video mode: "
@@ -184,8 +194,6 @@ MSG_VIDEO_MODE:
 MSG_PMODE_ENABLED:
 	.ascii "protected mode is now enabled"
 	.byte 13, 10, 0
-
-	.org 0x0600
 
 
 #****************************************************************************************
